@@ -1,0 +1,25 @@
+.gemini-folder-button {
+  display: block;
+  width: 100%;
+  margin-bottom: 8px;
+  text-align: right;
+}
+
+.gemini-image-list {
+  max-height: 45vh;
+  overflow-y: auto;
+  margin: 12px 0;
+}
+
+.gemini-image-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+}
+
+.gemini-modal-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+}
