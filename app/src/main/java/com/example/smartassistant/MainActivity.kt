@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -56,7 +57,10 @@ fun AssistantScreen() {
     val scope = rememberCoroutineScope()
 
     if (showSettings) {
-        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+        Column(
+            modifier = Modifier.fillMaxSize().padding(16.dp),
+            verticalArrangement = Arrangement.Center
+        ) {
             Text(text = "إعدادات Gemini", style = MaterialTheme.typography.headlineSmall)
             OutlinedTextField(
                 value = apiKey,
@@ -64,14 +68,20 @@ fun AssistantScreen() {
                 modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
                 label = { Text("مفتاح Gemini API") }
             )
-            Button(onClick = {
-                prefs.edit().putString("gemini_api_key", apiKey).apply()
-                showSettings = false
-                messages.add("المساعد: تم حفظ المفتاح. يمكنك الآن استخدام الردود الذكية.")
-            }) {
-                Text("حفظ")
+            Button(
+                onClick = {
+                    prefs.edit().putString("gemini_api_key", apiKey).apply()
+                    showSettings = false
+                    messages.add("المساعد: تم حفظ المفتاح. يمكنك الآن استخدام الردود الذكية.")
+                },
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("حفظ المفتاح")
             }
-            TextButton(onClick = { showSettings = false }) {
+            TextButton(
+                onClick = { showSettings = false },
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+            ) {
                 Text("رجوع")
             }
         }
@@ -79,18 +89,16 @@ fun AssistantScreen() {
     }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                text = "المساعد الذكي",
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.weight(1f)
-            )
-            TextButton(onClick = { showSettings = true }) {
-                Text("الإعدادات")
-            }
+        Text(text = "المساعد الذكي", style = MaterialTheme.typography.headlineSmall)
+
+        OutlinedButton(
+            onClick = { showSettings = true },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+        ) {
+            Text("⚙️ الإعدادات وإدخال مفتاح Gemini")
         }
 
-        LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp)) {
+        LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 8.dp)) {
             items(messages) { message ->
                 Text(text = message, modifier = Modifier.padding(vertical = 4.dp))
             }
