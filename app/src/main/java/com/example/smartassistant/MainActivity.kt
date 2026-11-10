@@ -1,6 +1,7 @@
 package com.example.smartassistant
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -93,9 +94,18 @@ fun AssistantScreen() {
 
         OutlinedButton(
             onClick = { showSettings = true },
-            modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp)
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
         ) {
             Text("⚙️ الإعدادات وإدخال مفتاح Gemini")
+        }
+
+        Button(
+            onClick = {
+                context.startActivity(Intent(context, ImageExtractionActivity::class.java))
+            },
+            modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp)
+        ) {
+            Text("استخراج نص حتى 10 صور")
         }
 
         LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 8.dp)) {
