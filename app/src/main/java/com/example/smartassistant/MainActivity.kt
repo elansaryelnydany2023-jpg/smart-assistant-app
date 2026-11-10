@@ -1,5 +1,6 @@
 package com.example.smartassistant
 
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -16,15 +17,19 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -41,11 +46,49 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun AssistantScreen() {
+    val context = LocalContext.current
+    val prefs = context.getSharedPreferences("smart_assistant", Context.MODE_PRIVATE)
     val messages = remember { mutableStateListOf("المساعد: مرحبًا! كيف أساعدك اليوم؟") }
     var input by remember { mutableStateOf("") }
+    var apiKey by remember { mutableStateOf(prefs.getString("gemini_api_key", "") ?: "") }
+    var showSettings by remember { mutableStateOf(false) }
+    var isLoading by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
+
+    if (showSettings) {
+        Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+            Text(text = "إعدادات Gemini", style = MaterialTheme.typography.headlineSmall)
+            OutlinedTextField(
+                value = apiKey,
+                onValueChange = { apiKey = it },
+                modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                label = { Text("مفتاح Gemini API") }
+            )
+            Button(onClick = {
+                prefs.edit().putString("gemini_api_key", apiKey).apply()
+                showSettings = false
+                messages.add("المساعد: تم حفظ المفتاح. يمكنك الآن استخدام الردود الذكية.")
+            }) {
+                Text("حفظ")
+            }
+            TextButton(onClick = { showSettings = false }) {
+                Text("رجوع")
+            }
+        }
+        return
+    }
 
     Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
-        Text(text = "المساعد الذكي", style = MaterialTheme.typography.headlineSmall)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                text = "المساعد الذكي",
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(onClick = { showSettings = true }) {
+                Text("الإعدادات")
+            }
+        }
 
         LazyColumn(modifier = Modifier.weight(1f).fillMaxWidth().padding(vertical = 12.dp)) {
             items(messages) { message ->
@@ -58,31 +101,28 @@ fun AssistantScreen() {
                 value = input,
                 onValueChange = { input = it },
                 modifier = Modifier.weight(1f),
-                label = { Text("اكتب رسالتك") }
+                label = { Text("اكتب رسالتك") },
+                enabled = !isLoading
             )
             Button(
                 onClick = {
-                    if (input.isNotBlank()) {
-                        messages.add("أنت: $input")
-                        messages.add("المساعد: ${generateReply(input)}")
+                    val message = input.trim()
+                    if (message.isNotBlank() && !isLoading) {
+                        messages.add("أنت: $message")
                         input = ""
+                        isLoading = true
+                        scope.launch {
+                            val reply = GeminiService.generateReply(apiKey, message)
+                            messages.add("المساعد: $reply")
+                            isLoading = false
+                        }
                     }
                 },
-                modifier = Modifier.padding(start = 8.dp)
+                modifier = Modifier.padding(start = 8.dp),
+                enabled = !isLoading
             ) {
-                Text("إرسال")
+                Text(if (isLoading) "..." else "إرسال")
             }
         }
-    }
-}
-
-fun generateReply(message: String): String {
-    val text = message.trim().lowercase()
-    return when {
-        text.contains("مرحبا") || text.contains("السلام") -> "أهلًا بك! كيف يمكنني مساعدتك؟"
-        text.contains("كيف حالك") -> "أنا بخير، شكرًا لسؤالك."
-        text.contains("وقت") -> "لا أستطيع معرفة الوقت الحالي داخل هذه النسخة التجريبية."
-        text.contains("شكرا") -> "على الرحب والسعة!"
-        else -> "استلمت رسالتك. هذه نسخة تجريبية من المساعد الذكي."
     }
 }
